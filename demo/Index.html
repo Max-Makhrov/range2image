@@ -1,0 +1,77 @@
+<html>
+<body style="background-color:#F8F9FA;">
+
+  <script src="//mozilla.github.io/pdf.js/build/pdf.js"></script>
+  <div>
+    <p id="imageurl"></p> 
+  </div>
+  <canvas id="canvas"></canvas>
+
+  <script>
+    // credits: https://gist.github.com/jdeng/cbfad9cb21e452127c81
+    var url = 'IMPORT_PDF_URL'; //Loaading the PDF from URL
+
+    // Loaded via <script> tag, create shortcut to access PDF.js exports.
+    var pdfjsLib = window['pdfjs-dist/build/pdf'];
+
+    // The workerSrc property shall be specified.
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '//mozilla.github.io/pdf.js/build/pdf.worker.js';
+
+    var pdfDoc = null,
+        pageNum = 1,
+        scale = 2 * IMAGE_SCALE,
+        canvas = document.getElementById('canvas'),
+        response = document.getElementById('imageurl'),
+        ctx = canvas.getContext('2d'),
+        imageurl = '...';
+
+    /**
+     * Image was saved to Drive. 
+     * This will show it's url on screen
+     */
+    function onSuccess(imageurl) {
+      response.innerHTML = imageurl;
+    }
+
+    /**
+     * Get page info from document, resize canvas accordingly, and render page.
+     * @param num Page number.
+     */
+    function renderPage(num) {
+      // Using promise to fetch the page
+      pdfDoc.getPage(num).then(function(page) {
+        var viewport = page.getViewport({scale: scale});
+        console.log(viewport);
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        // Render PDF page into canvas context
+        var renderContext = {
+          canvasContext: ctx,
+          viewport: viewport
+        };
+        var renderTask = page.render(renderContext);
+
+        // Wait for rendering to finish
+        renderTask.promise.then(function() {
+          // after image rendered
+          google.script.run.withSuccessHandler(onSuccess)
+          .saveDataUrlToFolder(canvas.toDataURL());
+        });
+      });
+
+    }
+
+    /**
+     * Asynchronously downloads PDF.
+     */
+    pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {
+      // Initial/first page rendering
+      pdfDoc = pdfDoc_;
+      renderPage(pageNum);
+    });
+
+  </script>
+
+</body>
+</html>
