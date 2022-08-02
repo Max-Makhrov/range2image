@@ -1,6 +1,6 @@
 <html>
 <body style="background-color:#F8F9FA;">
-
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
   <script src="//mozilla.github.io/pdf.js/build/pdf.js"></script>
   <div>
     <p id="imageurl"></p> 
@@ -24,6 +24,7 @@
         response = document.getElementById('imageurl'),
         ctx = canvas.getContext('2d'),
         imageurl = '...';
+        imageName = 'IMAGE_NAME';
 
     /**
      * Image was saved to Drive. 
@@ -55,8 +56,9 @@
         // Wait for rendering to finish
         renderTask.promise.then(function() {
           // after image rendered
+          response.innerHTML = '⏳Loading...';
           google.script.run.withSuccessHandler(onSuccess)
-          .saveDataUrlToFolder(canvas.toDataURL());
+          .saveDataUrlToFolder(canvas.toDataURL(), imageName);
         });
       });
 
