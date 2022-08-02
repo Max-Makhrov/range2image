@@ -1,5 +1,14 @@
+//    ____        _   _                 
+//   / __ \      | | (_)                
+//  | |  | |_ __ | |_ _  ___  _ __  ___ 
+//  | |  | | '_ \| __| |/ _ \| '_ \/ __|
+//  | |__| | |_) | |_| | (_) | | | \__ \
+//   \____/| .__/ \__|_|\___/|_| |_|___/
+//         | |                          
+//         |_|                          
 var SaveRangeAsImageSettings = {
   folder_id: '',
+  subfolder_name: 'Range2Image', // creates subfolder if set
   save2drive: true,
   measure_limit: 150, // script will assume all other rows/columns has the same size
   size_limit: 1100,   // the max. number of rows/columns,
@@ -7,18 +16,36 @@ var SaveRangeAsImageSettings = {
 }
 
 
+
+//            _                 _   
+//      /\   | |               | |  
+//     /  \  | |__   ___  _   _| |_ 
+//    / /\ \ | '_ \ / _ \| | | | __|
+//   / ____ \| |_) | (_) | |_| | |_ 
+//  /_/    \_\_.__/ \___/ \__,_|\__|
+// makhrov.max@gmail.com
+// MIT
+// https://github.com/Max-Makhrov/range2image                                 
+                                 
+
+
+
+//   __  __                  
+//  |  \/  |                 
+//  | \  / | ___ _ __  _   _ 
+//  | |\/| |/ _ \ '_ \| | | |
+//  | |  | |  __/ | | | |_| |
+//  |_|  |_|\___|_| |_|\__,_|
 // Use this code for Google Docs, Slides, Forms, or Sheets.
 function onOpen() {
   SpreadsheetApp.getUi() // Or DocumentApp or SlidesApp or FormApp.
-      .createMenu('🖼️ Range2Pic Menu')
+      .createMenu('🖼️ Range2Image Menu')
       .addItem('Convert Selection to Image', 'convertSelection2Image')
       .addItem('Convert Selection to Image [SIZE x 2]', 'convertSelection2ImageX2_')
-      .addItem('Convert Selection to Image [SIZE x 2]', 'convertSelection2ImageX4_')
+      .addItem('Convert Selection to Image [SIZE x 4]', 'convertSelection2ImageX4_')
       .addItem('Convert Selection to Image [SIZE x 8]', 'convertSelection2ImageX8_')
       .addToUi();
 }
-
-
 function convertSelection2ImageX2_() {
   SaveRangeAsImageSettings.image_scale = 2;
   convertSelection2Image();
@@ -34,14 +61,31 @@ function convertSelection2ImageX8_() {
 
 
 
-function convertSelection2Image() {
-  var file = SpreadsheetApp.getActive();
-  var range = SpreadsheetApp.getActiveRange();
-  var file_name = file.getName() + '_' + range.getA1Notation();
-  SaveRangeAsImageSettings.file_name = file_name;
-  var url = getPdfPrintUrl_(range, SaveRangeAsImageSettings);
-  // console.log(url);
 
+//   __  __       _       
+//  |  \/  |     (_)      
+//  | \  / | __ _ _ _ __  
+//  | |\/| |/ _` | | '_ \ 
+//  | |  | | (_| | | | | |
+//  |_|  |_|\__,_|_|_| |_|
+function convertSelection2Image() {
+  var sets = SaveRangeAsImageSettings;
+  var file = SpreadsheetApp.getActive();
+
+  /** check file is open to view */
+  var fileid = file.getId();
+  if (!isOpen4View_(fileid)) {
+    Browser.msgBox('👀 To make the script work please share the file so that anyone can view.');
+    return -1;
+  }
+
+
+  var range = SpreadsheetApp.getActiveRange();
+  var file_name = file.getName() + '_' +  
+    range.getSheet().getName() + '_' +
+    range.getA1Notation();
+  var url = getPdfPrintUrl_(range, sets);
+  // console.log(url);
 
    var htmltext = HtmlService
       .createTemplateFromFile('Index')
@@ -50,18 +94,27 @@ function convertSelection2Image() {
   
   // add the function names 
   htmltext = htmltext.replace(/IMPORT_PDF_URL/m, url);
-  var scale = SaveRangeAsImageSettings.image_scale;
+  var scale = sets.image_scale;
   htmltext = htmltext.replace(/IMAGE_SCALE/m, scale);
+  htmltext = htmltext.replace(/IMAGE_NAME/m, file_name);
 
   var html = HtmlService.createTemplate(htmltext).evaluate()
     .setSandboxMode(HtmlService.SandboxMode.NATIVE);
 
   SpreadsheetApp.getUi()
-      .showModalDialog(html, 'Range2Pic');
+      .showModalDialog(html, '🖼️Range2Image');
 
 }
 
 
+
+
+//   _____    _  __ 
+//  |  __ \  | |/ _|
+//  | |__) |_| | |_ 
+//  |  ___/ _` |  _|
+//  | |  | (_| | |  
+//  |_|   \__,_|_|  
 /**
  * converts range to Url
  * ready to be saved as PDF
@@ -112,7 +165,7 @@ function getPdfPrintUrl_(range, options) {
       '↔📐Measuring width...');
   }
  
-  // get row height in pixelsh
+  // get row height in pixels
   var h = 0;
   for (var i = rownum; i <= rownum2; i++) {
     if (i <= options.measure_limit) {
@@ -123,7 +176,7 @@ function getPdfPrintUrl_(range, options) {
     if (size === 2) {
       h-=1;
     } else {
-      // h -= 0.415;
+      // h -= 0.42; /** TODO → test the range to make it fit any range */
     }
     
     if ((i % 50) === 0 &&  i <= options.measure_limit) {
@@ -192,7 +245,7 @@ function getPdfPrintUrl_(range, options) {
       + 'horizontal_alignment=LEFT' // //LEFT/CENTER/RIGHT
       + '&gridlines=false'
       + "&fmcmd=12"
-      // + '&fzr=FALSE'      
+      + '&fzr=FALSE'      
       + sheetParam
       + rangeParam;
   // console.log('exportUrl=' + exportUrl);
@@ -204,16 +257,77 @@ function getPdfPrintUrl_(range, options) {
 
 
 
+//      /\                         
+//     /  \   ___ ___ ___  ___ ___ 
+//    / /\ \ / __/ __/ _ \/ __/ __|
+//   / ____ \ (_| (_|  __/\__ \__ \
+//  /_/    \_\___\___\___||___/___/
+// function test_isOpen4View() {
+//   var ss = SpreadsheetApp.getActive();
+//   var fileid = ss.getId();
+//   console.log(isOpen4View_(fileid));
+// }
+/**
+ * test if anyone can view the file
+ * 
+ * credits:
+ * https://www.labnol.org/code/19538-file-sharing-permissions
+ */
+function isOpen4View_(fileid) {
+
+  var file = DriveApp.getFileById(fileid);
+  var access = file.getSharingAccess();
+  var privacy;
+
+  switch (access) {
+    case DriveApp.Access.PRIVATE:
+      privacy = 'Private';
+      break;
+    case DriveApp.Access.ANYONE:
+      privacy = 'Anyone';
+      break;
+    case DriveApp.Access.ANYONE_WITH_LINK:
+      privacy = 'Anyone with a link';
+      break;
+    case DriveApp.Access.DOMAIN:
+      privacy = 'Anyone inside domain';
+      break;
+    case DriveApp.Access.DOMAIN_WITH_LINK:
+      privacy = 'Anyone inside domain who has the link';
+      break;
+    default:
+      privacy = 'Unknown';
+  }
+
+  // console.log(privacy);
+
+  var result = [
+    'Anyone', 'Anyone with a link'
+  ].indexOf(privacy) > -1;
+
+  return result;
+}
+
+
+
+
+//   _____                            ___  _____       _           
+//  |_   _|                          |__ \|  __ \     (_)          
+//    | |  _ __ ___   __ _  __ _  ___   ) | |  | |_ __ ___   _____ 
+//    | | | '_ ` _ \ / _` |/ _` |/ _ \ / /| |  | | '__| \ \ / / _ \
+//   _| |_| | | | | | (_| | (_| |  __// /_| |__| | |  | |\ V /  __/
+//  |_____|_| |_| |_|\__,_|\__, |\___|____|_____/|_|  |_| \_/ \___|
+//                          __/ |                                  
+//                         |___/                                   
 /**
  * Callback function from Index.html
  */
-function saveDataUrlToFolder(dataURI) {
+function saveDataUrlToFolder(dataURI, image_name) {
   var sets = SaveRangeAsImageSettings;
-  
   if (!sets.save2drive) {
-    return 'Done!';
+    return '✔️Done!<BR>Rigth clisck the image to save locally ↓';
   }
-
+  sets.file_name = image_name;
   try {
     return saveDataUrlToFolder_(dataURI, sets);
   } catch (e) {
@@ -222,30 +336,78 @@ function saveDataUrlToFolder(dataURI) {
 
 }
 function saveDataUrlToFolder_(dataURI, sets) {
-  var folder;
+  var root;
   if (sets.folder_id === '') {
-    folder = DriveApp.getRootFolder();
+    root = DriveApp.getRootFolder();
   } else {
       try {
-        folder = DriveApp.getFolderById(sets.folder_id);
+        root = DriveApp.getFolderById(sets.folder_id);
       } catch (err) {
         return err;
       }
     }
-    if (!folder) {
+    if (!root) {
       return 'no folder with id = ' + sets.folder_id;
     }
+    var folder;
+    if (sets.subfolder_name === '' || !sets.subfolder_name) {
+      folder = root;
+    } else {
+      folder = createFolderInFolder_(root, sets.subfolder_name);
+    }
+    
 
     var type = (dataURI.split(";")[0]).replace('data:','');
     var imageUpload = Utilities.base64Decode(dataURI.split(",")[1]);
-    var blob = Utilities.newBlob(imageUpload, type, "nameOfImage.png");
+    var blob = Utilities.newBlob(imageUpload, type, sets.file_name + ".png");
 
     try {
       var file = folder.createFile(blob);
     } catch (err) {
       return 'Oops! Range is too big and cannot be rendered';
     }
-    
 
-    return 'Image is saved to Drive! Your URL:<BR>' + file.getUrl();
+    var result = '✔️Image is saved to Drive!<BR>' + 
+      '<a href="' + file.getUrl() + '">' + sets.file_name + '</a>'  +
+      '<BR><BR> Rigth click the image to save locally ↓'
+
+    return result;
+}
+
+
+
+
+//   ______    _     _               
+//  |  ____|  | |   | |              
+//  | |__ ___ | | __| | ___ _ __ ___ 
+//  |  __/ _ \| |/ _` |/ _ \ '__/ __|
+//  | | | (_) | | (_| |  __/ |  \__ \
+//  |_|  \___/|_|\__,_|\___|_|  |___/
+/**
+ * create folder in folder
+ * 
+ * @param {DriveApp.Folder} folder
+ * @param {string} name
+ */
+function createFolderInFolder_(folder, name) {
+  var existingFolder = isFolderInFolder_(folder, name);
+  // exclude creating folders with the same names
+  if (existingFolder) { return existingFolder; } 
+  var result = folder.createFolder(name);
+  return result;  
+}
+/**
+ * folder with name exists
+ * 
+ * @param {DriveApp.Folder} folder
+ * @param {string} name
+ */
+function isFolderInFolder_(folder, name) {
+  var folders = folder.getFolders();
+  var folder;
+  while (folders.hasNext()) {
+    folder = folders.next();
+    if (folder.getName() === name) { return folder; }
+  }
+  return false; 
 }
