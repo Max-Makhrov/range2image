@@ -72,28 +72,25 @@ function convertSelection2Image() {
   var sets = SaveRangeAsImageSettings;
   var file = SpreadsheetApp.getActive();
 
-  /** check file is open to view */
-  var fileid = file.getId();
-  if (!isOpen4View_(fileid)) {
-    Browser.msgBox('👀 To make the script work please share the file so that anyone can view.');
-    return -1;
-  }
-
-
   var range = SpreadsheetApp.getActiveRange();
   var file_name = file.getName() + '_' +  
     range.getSheet().getName() + '_' +
     range.getA1Notation();
   var url = getPdfPrintUrl_(range, sets);
-  // console.log(url);
 
    var htmltext = HtmlService
       .createTemplateFromFile('Index')
       .evaluate()
       .getContent();
   
-  // add the function names 
-  htmltext = htmltext.replace(/IMPORT_PDF_URL/m, url);
+
+  var blob =  UrlFetchApp.fetch(url, {headers: {authorization: "Bearer " + ScriptApp.getOAuthToken()}}).getBlob();
+  // Convert the Blob to a base64-encoded string
+  var blobBytes = blob.getBytes();
+  var blobString = Utilities.base64Encode(blobBytes);
+
+  htmltext = htmltext.replace(/PDF_BLOB/m, blobString);
+
   var scale = sets.image_scale;
   htmltext = htmltext.replace(/IMAGE_SCALE/m, scale);
   htmltext = htmltext.replace(/IMAGE_NAME/m, file_name);
@@ -123,6 +120,9 @@ function convertSelection2Image() {
  * https://stackoverflow.com/questions/46088042
  * https://gist.github.com/Spencer-Easton/78f9867a691e549c9c70
  * https://kandiral.ru/googlescript/eksport_tablic_google_sheets_v_pdf_fajl.html
+ * 
+ * @param {int} options.size_limit    1100 rows/columns (in tests)
+ * @param {int} options.measure_limit 150 rows/columns
  */
 function getPdfPrintUrl_(range, options) {
   var ratio = 96; // get inch from pixel
@@ -191,8 +191,9 @@ function getPdfPrintUrl_(range, options) {
       '↕📐Measuring height...');
   }
 
-  var hh = Math.round(h/ratio * 1000) / 1000;
-  var ww = Math.round(w/ratio * 1000) / 1000;
+  // add 0.1 inch to fit some ranges
+  var hh = Math.round(h/ratio * 1000 + 100) / 1000;
+  var ww = Math.round(w/ratio * 1000 + 100) / 1000;
 
   // Browser.msgBox(
   //   JSON.stringify(
@@ -253,62 +254,6 @@ function getPdfPrintUrl_(range, options) {
 
   return exportUrl;
 }
-
-
-
-
-//      /\                         
-//     /  \   ___ ___ ___  ___ ___ 
-//    / /\ \ / __/ __/ _ \/ __/ __|
-//   / ____ \ (_| (_|  __/\__ \__ \
-//  /_/    \_\___\___\___||___/___/
-// function test_isOpen4View() {
-//   var ss = SpreadsheetApp.getActive();
-//   var fileid = ss.getId();
-//   console.log(isOpen4View_(fileid));
-// }
-/**
- * test if anyone can view the file
- * 
- * credits:
- * https://www.labnol.org/code/19538-file-sharing-permissions
- */
-function isOpen4View_(fileid) {
-
-  var file = DriveApp.getFileById(fileid);
-  var access = file.getSharingAccess();
-  var privacy;
-
-  switch (access) {
-    case DriveApp.Access.PRIVATE:
-      privacy = 'Private';
-      break;
-    case DriveApp.Access.ANYONE:
-      privacy = 'Anyone';
-      break;
-    case DriveApp.Access.ANYONE_WITH_LINK:
-      privacy = 'Anyone with a link';
-      break;
-    case DriveApp.Access.DOMAIN:
-      privacy = 'Anyone inside domain';
-      break;
-    case DriveApp.Access.DOMAIN_WITH_LINK:
-      privacy = 'Anyone inside domain who has the link';
-      break;
-    default:
-      privacy = 'Unknown';
-  }
-
-  // console.log(privacy);
-
-  var result = [
-    'Anyone', 'Anyone with a link'
-  ].indexOf(privacy) > -1;
-
-  return result;
-}
-
-
 
 
 //   _____                            ___  _____       _           
