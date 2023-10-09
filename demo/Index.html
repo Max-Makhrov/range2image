@@ -8,14 +8,38 @@
   <canvas id="canvas"></canvas>
 
   <script>
-    // credits: https://gist.github.com/jdeng/cbfad9cb21e452127c81
-    var url = 'IMPORT_PDF_URL'; //Loaading the PDF from URL
 
     // Loaded via <script> tag, create shortcut to access PDF.js exports.
     var pdfjsLib = window['pdfjs-dist/build/pdf'];
 
     // The workerSrc property shall be specified.
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    var blobString  = 'PDF_BLOB';
+    // Decode the base64-encoded string to binary data
+    var binaryData = atob(blobString);
+    // Create an ArrayBuffer from the binary data
+    var arrayBuffer = new ArrayBuffer(binaryData.length);
+    var view = new Uint8Array(arrayBuffer);
+    for (var i = 0; i < binaryData.length; i++) {
+      view[i] = binaryData.charCodeAt(i);
+    }
+    // Create a Blob from the ArrayBuffer
+    var blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+
+    // Create a Uint8Array from the Blob data
+    var arrayBuffer;
+    var fileReader = new FileReader();
+    fileReader.onload = function() {
+      arrayBuffer = this.result;
+      // Initialize the PDF.js
+      pdfjsLib.getDocument({ data: arrayBuffer }).promise.then(function(pdfDoc_) {
+        // Initial/first page rendering
+        pdfDoc = pdfDoc_;
+        renderPage(pageNum);
+      });
+    };
+    fileReader.readAsArrayBuffer(blob);
 
     var pdfDoc = null,
         pageNum = 1,
@@ -42,7 +66,6 @@
       // Using promise to fetch the page
       pdfDoc.getPage(num).then(function(page) {
         var viewport = page.getViewport({scale: scale});
-        console.log(viewport);
         canvas.height = viewport.height;
         canvas.width = viewport.width;
 
@@ -64,14 +87,6 @@
 
     }
 
-    /**
-     * Asynchronously downloads PDF.
-     */
-    pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {
-      // Initial/first page rendering
-      pdfDoc = pdfDoc_;
-      renderPage(pageNum);
-    });
 
   </script>
 
