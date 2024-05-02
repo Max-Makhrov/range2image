@@ -7,9 +7,11 @@ https://docs.google.com/spreadsheets/d/1qNQ6iCMoBCQgJzBB63ymtBQ6BedXZFhjgZZKGItj
 ## Use with a trigger
 
 Here you can find the App Script version of the code with no HTML:
+
 https://github.com/Max-Makhrov/range2image/blob/main/demo%20v2/Code.gs
 
 Sample file:
+
 https://docs.google.com/spreadsheets/d/1yqsehiR8t3BoKHwJBibm2SRItdtcNAyvT0FG-8-Q-ZU/edit#gid=0
 
 Updates:
