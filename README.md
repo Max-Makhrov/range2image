@@ -23,3 +23,6 @@ Installation:
  1. Add Drive App external service
  2. Go to manifest and (appscript.json) and change the Drive version to V3.
 
+![image](https://github.com/Max-Makhrov/range2image/assets/19220852/28a6c37f-7267-4eb4-a036-2697c8977ad6)
+
+
